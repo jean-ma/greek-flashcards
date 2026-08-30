@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Greek Flashcards</title>
+<style>
+  :root {
+    --limestone: #f2ede2;
+    --limestone-dim: #e6ddc9;
+    --aegean: #1d3f5c;
+    --aegean-deep: #0f2740;
+    --terracotta: #bd5b38;
+    --olive: #6b7a4f;
+    --ink: #23201a;
+    --paper-shadow: rgba(15, 39, 64, 0.18);
+    --font-display: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --font-body: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--limestone);
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(29,63,92,0.05) 0, transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(189,91,56,0.06) 0, transparent 45%);
+    color: var(--ink);
+    font-family: var(--font-body);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 64px;
+  }
+
+  header {
+    text-align: center;
+    max-width: 560px;
+    margin-bottom: 28px;
+  }
+
+  header .eyebrow {
+    font-family: var(--font-body);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: var(--terracotta);
+    font-weight: 700;
+  }
+
+  header h1 {
+    font-family: var(--font-display);
+    font-size: 34px;
+    margin: 6px 0 4px;
+    color: var(--aegean-deep);
+    font-weight: 600;
+  }
+
+  header p {
+    margin: 0;
+    font-size: 14px;
+    color: #5a5648;
+  }
+
+  .lesson-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 640px;
+    margin-bottom: 22px;
+  }
+
+  .lesson-tab {
+    border: 1px solid var(--aegean);
+    background: transparent;
+    color: var(--aegean-deep);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  }
+
+  .lesson-tab:hover { transform: translateY(-1px); }
+
+  .lesson-tab.active {
+    background: var(--aegean);
+    color: var(--limestone);
+  }
+
+  .stage {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .progress {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: #7a7462;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .card-frame {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    perspective: 1200px;
+    cursor: pointer;
+  }
+
+  .card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(.4,.2,.2,1);
+    transform-style: preserve-3d;
+  }
+
+  .card.flipped { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    box-shadow: 0 18px 34px var(--paper-shadow);
+    border: 1px solid rgba(15,39,64,0.12);
+  }
+
+  .face.front {
+    background: var(--limestone);
+    background-image: linear-gradient(160deg, #ffffff 0%, var(--limestone-dim) 100%);
+  }
+
+  .face.back {
+    background: var(--aegean-deep);
+    color: var(--limestone);
+    transform: rotateY(180deg);
+    background-image: linear-gradient(160deg, var(--aegean) 0%, var(--aegean-deep) 100%);
+  }
+
+  .stamp {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    font-weight: 700;
+    opacity: 0.8;
+  }
+
+  .face.back .stamp { color: #d99a84; }
+
+  .greek-word {
+    font-family: var(--font-display);
+    font-size: 42px;
+    color: var(--aegean-deep);
+    line-height: 1.15;
+  }
+
+  .translit {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--terracotta);
+    font-style: italic;
+  }
+
+  .english-word {
+    font-family: var(--font-display);
+    font-size: 26px;
+    line-height: 1.3;
+  }
+
+  .tap-hint {
+    margin-top: 14px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #9c9683;
+  }
+
+  .face.back .tap-hint { color: #a9bdcd; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 22px;
+  }
+
+  .nav-btn {
+    background: var(--olive);
+    color: var(--limestone);
+    border: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease, background 0.15s ease;
+  }
+
+  .nav-btn:hover { transform: scale(1.06); }
+  .nav-btn:active { transform: scale(0.96); }
+
+  .shuffle-btn {
+    background: transparent;
+    border: 1px solid var(--terracotta);
+    color: var(--terracotta);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .shuffle-btn:hover {
+    background: var(--terracotta);
+    color: var(--limestone);
+  }
+
+  .direction-btn {
+    margin-top: 16px;
+    background: var(--aegean-deep);
+    color: var(--limestone);
+    border: none;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 9px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  .direction-btn:hover { transform: translateY(-1px); }
+
+  footer {
+    margin-top: 44px;
+    max-width: 460px;
+    font-size: 12px;
+    color: #8a8672;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  footer code {
+    background: var(--limestone-dim);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .nav-btn, .shuffle-btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Ελληνικά &middot; Vocabulary Cards</div>
+  <h1>Greek Flashcards</h1>
+  <p>Tap a card to flip it. Use the arrows to move through the lesson.</p>
+</header>
+
+<div class="lesson-bar" id="lessonBar"></div>
+
+<div class="stage">
+  <div class="progress" id="progress">1 / 1</div>
+  <div class="card-frame" id="cardFrame">
+    <div class="card" id="card">
+      <div class="face front"></div>
+      <div class="face back"></div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="nav-btn" id="prevBtn" aria-label="Previous card">&#8592;</button>
+    <button class="shuffle-btn" id="shuffleBtn">Shuffle</button>
+    <button class="nav-btn" id="nextBtn" aria-label="Next card">&#8594;</button>
+  </div>
+  <button class="direction-btn" id="directionBtn">Greek &#8594; English</button>
+</div>
+
+<footer>
+  Add new lessons by editing the <code>LESSONS</code> array at the top of the
+  script in this file &mdash; each entry needs a <code>title</code> and a
+  <code>words</code> list of <code>{ gr, translit, en }</code> objects.
+</footer>
+
+<script>
+  // ---------------------------------------------------------------------
+  // LESSON DATA — add new lessons here. Each lesson is:
+  // { title: "Lesson name", words: [ { gr, translit, en }, ... ] }
+  // The page auto-generates a tab for every lesson in this array.
+  // ---------------------------------------------------------------------
+  const LESSONS = [
+    {
+      title: "Familiar Greetings",
+      words: [
+        { gr: "Γεια σου", translit: "Ya su", en: "Hi" },
+        { gr: "Τι κάνεις;", translit: "Ti kanis?", en: "How are you? (lit. what are you doing?)" },
+        { gr: "Καλά, εσύ;", translit: "Kala, esi?", en: "Good, you?" },
+        { gr: "Χάρηκα", translit: "Charika", en: "Good to see you" },
+        { gr: "Πώς είναι η δουλειά;", translit: "Pos ine i doulia?", en: "How's work?" },
+        { gr: "Όλα καλά;", translit: "Ola kala?", en: "Everything good?" },
+        { gr: "Ευχαριστώ", translit: "Efcharisto", en: "Thanks" },
+        { gr: "Τα λέμε", translit: "Ta leme", en: "See you" }
+      ]
+    },
+    {
+      title: "Lunch with Father-in-Law",
+      words: [
+        { gr: "Πεινάω", translit: "Pinao", en: "I'm hungry" },
+        { gr: "Διψάω", translit: "Dipsao", en: "I'm thirsty" },
+        { gr: "Τι θα πάρεις;", translit: "Ti tha paris?", en: "What will you have?" },
+        { gr: "Το φαγητό", translit: "To fagito", en: "The food" },
+        { gr: "Νόστιμο", translit: "Nostimo", en: "Tasty" },
+        { gr: "Ο λογαριασμός", translit: "O logariasmos", en: "The bill" },
+        { gr: "Κερνάω", translit: "Kernao", en: "I treat / pay for (someone)" },
+        { gr: "Σιγά σιγά", translit: "Siga siga", en: "Slowly, take it easy / no rush" },
+        { gr: "Καλή όρεξη", translit: "Kali orexi", en: "Enjoy your meal" },
+        { gr: "Χορτάτος/η", translit: "Chortatos/i", en: "Full (m/f)" },
+        { gr: "Λίγο ακόμα;", translit: "Ligo akoma?", en: "A little more?" },
+        { gr: "Δεν πειράζει", translit: "Den pirazi", en: "It's ok / no problem" }
+      ]
+    },
+    {
+      title: "Question Words",
+      words: [
+        { gr: "Τι", translit: "Ti", en: "What" },
+        { gr: "Ποιος / Ποια / Ποιο", translit: "Pios / Pia / Pio", en: "Who / Which (m/f/n)" },
+        { gr: "Πού", translit: "Pou", en: "Where" },
+        { gr: "Πότε", translit: "Pote", en: "When" },
+        { gr: "Πώς", translit: "Pos", en: "How" },
+        { gr: "Γιατί", translit: "Giati", en: "Why" },
+        { gr: "Πόσο", translit: "Poso", en: "How much" },
+        { gr: "Πόσοι / Πόσες / Πόσα", translit: "Posi / Poses / Posa", en: "How many (m/f/n)" },
+        { gr: "Ποιανού", translit: "Pianou", en: "Whose" }
+      ]
+    },
+    {
+      title: "Gardening in Zakynthos",
+      words: [
+        { gr: "Ο κήπος", translit: "O kipos", en: "The garden" },
+        { gr: "Η ελιά", translit: "I elia", en: "The olive tree" },
+        { gr: "Η λεμονιά", translit: "I lemonia", en: "The lemon tree" },
+        { gr: "Το χώμα", translit: "To choma", en: "The soil" },
+        { gr: "Ποτίζω", translit: "Potizo", en: "I water" },
+        { gr: "Φυτεύω", translit: "Fitevo", en: "I plant" },
+        { gr: "Κλαδεύω", translit: "Kladevo", en: "I prune" },
+        { gr: "Το κλαδί", translit: "To kladi", en: "The branch" },
+        { gr: "Ο σπόρος", translit: "O sporos", en: "The seed" },
+        { gr: "Το λουλούδι", translit: "To louloudi", en: "The flower" },
+        { gr: "Η βροχή", translit: "I vrochi", en: "The rain" },
+        { gr: "Ξερός/ή", translit: "Xeros/i", en: "Dry (m/f)" },
+        { gr: "Ο ήλιος", translit: "O ilios", en: "The sun" },
+        { gr: "Η σκιά", translit: "I skia", en: "The shade" },
+        { gr: "Το χορτάρι", translit: "To chortari", en: "The weed / grass" }
+      ]
+    },
+    {
+      title: "Adverbs of Time, Place & Frequency",
+      words: [
+        { gr: "Σήμερα", translit: "Simera", en: "Today" },
+        { gr: "Αύριο", translit: "Avrio", en: "Tomorrow" },
+        { gr: "Χθες", translit: "Chthes", en: "Yesterday" },
+        { gr: "Τώρα", translit: "Tora", en: "Now" },
+        { gr: "Αργότερα", translit: "Argotera", en: "Later" },
+        { gr: "Εδώ", translit: "Edo", en: "Here" },
+        { gr: "Εκεί", translit: "Eki", en: "There" },
+        { gr: "Πάνω", translit: "Pano", en: "Up / above" },
+        { gr: "Κάτω", translit: "Kato", en: "Down / below" },
+        { gr: "Μέσα", translit: "Mesa", en: "Inside" },
+        { gr: "Έξω", translit: "Exo", en: "Outside" },
+        { gr: "Πάντα", translit: "Panta", en: "Always" },
+        { gr: "Ποτέ", translit: "Pote", en: "Never" },
+        { gr: "Συχνά", translit: "Sichna", en: "Often" },
+        { gr: "Σπάνια", translit: "Spania", en: "Rarely" }
+      ]
+    },
+    {
+      title: "At the Beach with My Wife",
+      words: [
+        { gr: "Η παραλία", translit: "I paralia", en: "The beach" },
+        { gr: "Η άμμος", translit: "I ammos", en: "The sand" },
+        { gr: "Το κύμα", translit: "To kyma", en: "The wave" },
+        { gr: "Κολυμπάω", translit: "Kolympao", en: "I swim" },
+        { gr: "Το μαγιό", translit: "To mayo", en: "The swimsuit" },
+        { gr: "Η ομπρέλα", translit: "I ombrela", en: "The umbrella / parasol" },
+        { gr: "Δροσερός/ή", translit: "Droseros/i", en: "Cool, refreshing (m/f)" },
+        { gr: "Ζεστός/ή", translit: "Zestos/i", en: "Hot, warm (m/f)" },
+        { gr: "Χαλαρώνω", translit: "Chalarono", en: "I relax" },
+        { gr: "Η βόλτα", translit: "I volta", en: "The walk / stroll" },
+        { gr: "Αγάπη μου", translit: "Agapi mou", en: "My love" },
+        { gr: "Όμορφος/η", translit: "Omorfos/i", en: "Beautiful (m/f)" },
+        { gr: "Το ηλιοβασίλεμα", translit: "To iliovasilema", en: "The sunset" },
+        { gr: "Μαζί", translit: "Mazi", en: "Together" },
+        { gr: "Το παγωτό", translit: "To pagoto", en: "The ice cream" }
+      ]
+    },
+    {
+      title: "The Garden Altar",
+      words: [
+        { gr: "Το εικονοστάσι", translit: "To ikonostasi", en: "The small shrine / altar stand" },
+        { gr: "Το θυμίαμα", translit: "To thymiama", en: "The incense" },
+        { gr: "Το θυμιατό", translit: "To thymiato", en: "The censer" },
+        { gr: "Ανάβω", translit: "Anavo", en: "I light" },
+        { gr: "Το κερί", translit: "To keri", en: "The candle" },
+        { gr: "Προσεύχομαι", translit: "Prosefchome", en: "I pray" },
+        { gr: "Ο σταυρός", translit: "O stavros", en: "The cross" },
+        { gr: "Η ευλογία", translit: "I evlogia", en: "The blessing" },
+        { gr: "Το παρεκκλήσι", translit: "To pareklisi", en: "The chapel" },
+        { gr: "Η πέτρα", translit: "I petra", en: "The stone" },
+        { gr: "Το λείψανο", translit: "To lipsano", en: "The relic" },
+        { gr: "Σφραγίζω", translit: "Sfragizo", en: "I seal" },
+        { gr: "Ο τοίχος", translit: "O toichos", en: "The wall" },
+        { gr: "Το πρωί", translit: "To proi", en: "The morning" },
+        { gr: "Η εικόνα", translit: "I ikona", en: "The icon" }
+      ]
+    },
+    {
+      title: "Insect Bite at the Doctor",
+      words: [
+        { gr: "Το τσίμπημα", translit: "To tsimpima", en: "The bite / sting" },
+        { gr: "Το έντομο", translit: "To edomo", en: "The insect" },
+        { gr: "Η αράχνη", translit: "I arachni", en: "The spider" },
+        { gr: "Το κόκκινο σημάδι", translit: "To kokkino simadi", en: "The red mark" },
+        { gr: "Το οίδημα", translit: "To oidima", en: "The swelling (wheal)" },
+        { gr: "Πρήζομαι", translit: "Prizome", en: "I swell up" },
+        { gr: "Η φαγούρα", translit: "I fagoura", en: "The itching" },
+        { gr: "Επικίνδυνος/η", translit: "Epikindynos/i", en: "Dangerous (m/f)" },
+        { gr: "Το νοσοκομείο", translit: "To nosokomio", en: "The hospital" },
+        { gr: "Ο γιατρός", translit: "O yatros", en: "The doctor" },
+        { gr: "Το αντιισταμινικό", translit: "To antiistaminiko", en: "The antihistamine" },
+        { gr: "Το αντιβιοτικό", translit: "To antiviotiko", en: "The antibiotic" },
+        { gr: "Το φάρμακο", translit: "To farmako", en: "The medicine" },
+        { gr: "Επείγον", translit: "Epigon", en: "Emergency / urgent" },
+        { gr: "Πονάω", translit: "Ponao", en: "It hurts / I'm in pain" }
+      ]
+    }
+  ];
+
+  // ---------------------------------------------------------------------
+  // App logic — no need to touch anything below to add lessons.
+  // ---------------------------------------------------------------------
+  let currentLesson = 0;
+  let currentIndex = 0;
+  let deck = [];
+  let direction = 'gr-en'; // 'gr-en' = Greek front, English back. 'en-gr' = reverse.
+
+  const lessonBar = document.getElementById('lessonBar');
+  const card = document.getElementById('card');
+  const cardFrame = document.getElementById('cardFrame');
+  const frontFace = document.querySelector('.face.front');
+  const backFace = document.querySelector('.face.back');
+  const progress = document.getElementById('progress');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const directionBtn = document.getElementById('directionBtn');
+
+  function buildTabs() {
+    lessonBar.innerHTML = '';
+    LESSONS.forEach((lesson, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'lesson-tab' + (i === currentLesson ? ' active' : '');
+      btn.textContent = lesson.title;
+      btn.addEventListener('click', () => selectLesson(i));
+      lessonBar.appendChild(btn);
+    });
+  }
+
+  function selectLesson(i) {
+    currentLesson = i;
+    currentIndex = 0;
+    deck = LESSONS[i].words.slice();
+    buildTabs();
+    renderCard();
+  }
+
+  function renderCard() {
+    card.classList.remove('flipped');
+    const item = deck[currentIndex];
+
+    if (direction === 'gr-en') {
+      frontFace.innerHTML = '<div class="stamp">GR</div>' +
+        '<div class="greek-word" id="greekWord">' + item.gr + '</div>' +
+        '<div class="translit" id="translitWord">' + item.translit + '</div>' +
+        '<div class="tap-hint">tap to reveal</div>';
+      backFace.innerHTML = '<div class="stamp">EN</div>' +
+        '<div class="english-word" id="englishWord">' + item.en + '</div>' +
+        '<div class="tap-hint">tap to flip back</div>';
+    } else {
+      frontFace.innerHTML = '<div class="stamp">EN</div>' +
+        '<div class="english-word" id="englishWord">' + item.en + '</div>' +
+        '<div class="tap-hint">tap to reveal</div>';
+      backFace.innerHTML = '<div class="stamp">GR</div>' +
+        '<div class="greek-word" id="greekWord">' + item.gr + '</div>' +
+        '<div class="translit" id="translitWord">' + item.translit + '</div>' +
+        '<div class="tap-hint">tap to flip back</div>';
+    }
+
+    progress.textContent = (currentIndex + 1) + ' / ' + deck.length;
+  }
+
+  function toggleDirection() {
+    direction = direction === 'gr-en' ? 'en-gr' : 'gr-en';
+    directionBtn.textContent = direction === 'gr-en' ? 'Greek \u2192 English' : 'English \u2192 Greek';
+    renderCard();
+  }
+
+  function nextCard() {
+    currentIndex = (currentIndex + 1) % deck.length;
+    renderCard();
+  }
+
+  function prevCard() {
+    currentIndex = (currentIndex - 1 + deck.length) % deck.length;
+    renderCard();
+  }
+
+  function shuffleDeck() {
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    currentIndex = 0;
+    renderCard();
+  }
+
+  cardFrame.addEventListener('click', () => card.classList.toggle('flipped'));
+  prevBtn.addEventListener('click', prevCard);
+  nextBtn.addEventListener('click', nextCard);
+  shuffleBtn.addEventListener('click', shuffleDeck);
+  directionBtn.addEventListener('click', toggleDirection);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') nextCard();
+    if (e.key === 'ArrowLeft') prevCard();
+    if (e.key === ' ') { e.preventDefault(); card.classList.toggle('flipped'); }
+  });
+
+  buildTabs();
+  selectLesson(0);
+</script>
+
+</body>
+</html>
